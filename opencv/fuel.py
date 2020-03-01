@@ -11,10 +11,9 @@ def bounding_boxes(contours,img) :
         if c.shape[0] > 5:
             minEllipse[i] = cv2.fitEllipse(c)
             angles[minEllipse[i]] = minEllipse[i][2]
-    print(angles)
     drawing_ellipse = np.zeros((img.shape[0], img.shape[1], 3), dtype=np.uint8)
     drawing_rectangle = np.zeros((img.shape[0], img.shape[1], 3), dtype=np.uint8)
-    drawing_ellipse = find_points(minRect,drawing_ellipse)
+    #drawing_ellipse = find_points(minRect,minEllipse,drawing_ellipse)
 
     for i, c in enumerate(contours):
         if cv2.contourArea(c) < 3:
@@ -22,7 +21,7 @@ def bounding_boxes(contours,img) :
         color = (rng.randint(0,256), rng.randint(0,256), rng.randint(0,256))
         #cv2.drawContours(drawing, contours, i, color)
         # ellipse
-        if c.shape[0] > 5:
+        if c.shape[0] > 5 and minRect[i][1][0]+10 < minRect[i][1][1]:
             cv2.ellipse(drawing_ellipse, minEllipse[i], color, 2)
         # rotated rectangle
         box = cv2.boxPoints(minRect[i])
@@ -31,13 +30,17 @@ def bounding_boxes(contours,img) :
     cv2.imshow('Contours', drawing_ellipse)
     cv2.imshow('contours', drawing_rectangle)
 
-def find_points(minEllipse,drawing):
-    #(center, size, angle)
-    print(minEllipse[0])
-    x1,y1 = minEllipse[7][0]    #center
-    minor,major =  minEllipse[7][1]   #size
-    angle = minEllipse[7][2]    #angle
-    #cv2.line(drawing,(int(x1),int(y1)),(int(x2),int(y2)),(255,13,22),2)
+def find_points(minRect, minEllipse, drawing):
+    minEllipse_1 = list()
+    color = (23,34,12)
+    for j, i in enumerate(minRect):
+        print(i)
+        if i is None:
+            continue
+        if i[1][0] > i[1][1]:
+            print(i)
+            cv2.ellipse(drawing, minEllipse[j], color, 2)
+    #cv2.line(drawing,(int(x1),int(y1)),(0,0),(255,13,22),2)
     return drawing
     
 def find_ellipse():
@@ -63,7 +66,7 @@ if __name__ == "__main__":
     gray_filtered = cv2.bilateralFilter(gray, 7, 50, 50)
     ret3,th31 = cv2.threshold(gray_filtered,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
     edges_high_thresh = cv2.Canny(th31, 50, 150)
-    contours, hierarchy = cv2.findContours(edges_high_thresh,cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE) 
+    _,contours, hierarchy = cv2.findContours(edges_high_thresh,cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE) 
     bounding_boxes(contours, edges_high_thresh)
     for c in contours:
         rect = cv2.boundingRect(c)
